@@ -1,5 +1,3 @@
-import 'dart:developer';
-
 import 'package:lets_mail/data/secret_data.dart';
 import 'package:mailer/mailer.dart';
 import 'package:mailer/smtp_server/gmail.dart';
@@ -44,15 +42,9 @@ class EmailHelper {
         ;
 
     try {
-      final sendReport = await send(message, smtpServer);
-      log('Message sent: $sendReport');
+      await send(message, smtpServer);
       return "";
     } on MailerException catch (e) {
-      log('Message not sent.');
-      log(e.message);
-      for (var p in e.problems) {
-        log('Problem: ${p.code}: ${p.msg}');
-      }
       return e.message;
     }
   }

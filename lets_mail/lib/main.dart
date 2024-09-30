@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
@@ -43,12 +44,13 @@ class MyHomePage extends StatefulWidget {
 class _MyHomePageState extends State<MyHomePage> {
   final String fromUser = 'Robin Bakkerus';
   final String subject = 'Save the date: zaterdag 9 november';
-  final int waitNseconds = 3;
+  final int waitNseconds = 20;
 
   String _text = 'Click op de Send button om Excel file te selecteren';
   String _summary = '';
   int _total = 0;
   int _success = 0;
+  int _failed = 0;
 
   @override
   Widget build(BuildContext context) {
@@ -84,8 +86,15 @@ class _MyHomePageState extends State<MyHomePage> {
       List<EmailModel> emailList = ExcelHelper().parseFile(file);
       _total = emailList.length;
       for (EmailModel emailModel in emailList) {
-        _sendMail(emailModel);
-        await Future.delayed(Duration(seconds: waitNseconds));
+        String address = _parseEmailAdress(emailModel.emailAdress);
+        if (address.isNotEmpty) {
+          EmailModel useModel =
+              EmailModel(emailAdress: address, signature: emailModel.signature);
+          _sendMail(useModel);
+          await Future.delayed(Duration(seconds: waitNseconds));
+        } else {
+          _buildTexts('Invalid mail address', emailModel);
+        }
       }
     }
 
@@ -112,9 +121,34 @@ class _MyHomePageState extends State<MyHomePage> {
       _text =
           'Met succes naar ${emailModel.emailAdress} ${emailModel.signature} verstuurd';
     } else {
-      _text = 'Fout tijdens versturen naar ${emailModel.emailAdress} : $result';
+      _failed++;
+      _text = 'Fout tijdens versturen naar ${emailModel.emailAdress}';
+      log('Fout tijdens versturen naar ${emailModel.emailAdress} ');
     }
 
-    _summary = '$_success van $_total verstuurd';
+    _summary = '$_success van $_total verstuurd, failed: $_failed';
+  }
+
+  String _parseEmailAdress(String value) {
+    String emailAddress = value;
+    if (value.contains('<')) {
+      String s = value.substring(value.indexOf('<') + 1);
+      emailAddress = s.substring(0, s.indexOf('>'));
+    }
+
+    if (emailAddress.endsWith(",")) {
+      emailAddress = emailAddress.substring(0, emailAddress.length - 1);
+    }
+
+    bool emailValid = RegExp(
+            r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+")
+        .hasMatch(emailAddress);
+
+    if (emailValid) {
+      return emailAddress;
+    } else {
+      log('$emailAddress is not valid');
+      return '';
+    }
   }
 }

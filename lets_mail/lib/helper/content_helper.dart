@@ -15,16 +15,16 @@ class ContentHelper {
   String buildContent(EmailModel emailModel) {
     String htmlContent = '''
 <h1>Hallo ${emailModel.signature} </h1>
-Misschien heb je deze mail al eerder ontvangen, maar ik stuur die nogmaals omdat bij een aantal deze mail in de spam box is gekomen<br>
-(Waarschijnlijk omdat er een klikbare link naar mijn website stond) <br>
-Dus daarom nogmaals: <br>
-<h2>Save-the-date: zaterdag 9 november, vanaf 16.39 uur</h2>
-Dan nodig ik je (en je partner) uit om voor de Pasta- & Silent Disco party in de 
+Misschien heb je deze mail al eerder ontvangen, maar omdat bij veel mensen deze in de spam box is terecht gekomen, 
+(Waarschijnlijk omdat er een klikbare link naar mijn website stond), stuur ik deze aangepaste mail nogmaals.<br>
+<br>
+<h2>Save-the-date: zaterdag 9 november, inloop vanaf 16.00 uur</h2>
+Dan nodig ik je (en je partner) uit voor de Pasta- & Silent Disco party in de 
 <font color="red">R</font> <font color="green">G</font> <font color="blue">B</font> Silent Disco Bar, Stratumseind 34a in Eindhoven.
 <br>
 In verband met catering graag r.s.v.p. voor 1 november of en zo ja met hoeveel je komt.
 <br><br>
-Voor meer info zie onderstaande website (copy/paste deze naar een browser)
+Voor veel meer info en de poster zie onderstaande url naar mijnwebsite (copy/paste deze naar een browser)
 <br>
 <font color="blue">robin70-bbe50.web.app</font>
 <br><br>

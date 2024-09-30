@@ -43,7 +43,8 @@ class ExcelHelper {
   void _parseRow(Data? cell, List<String> values) {
     if (cell != null) {
       if (cell.columnIndex < 3) {
-        values.add(_parseCell(cell));
+        String value = _parseCell(cell);
+        values.add(value);
       }
     }
   }

@@ -43,8 +43,8 @@ class MyHomePage extends StatefulWidget {
 
 class _MyHomePageState extends State<MyHomePage> {
   final String fromUser = 'Robin Bakkerus';
-  final String subject = 'Save the date: zaterdag 9 november';
-  final int waitNseconds = 20;
+  final String subject = 'Zaterdag 9 november, Pasta & Silent Disco Party';
+  final int waitNseconds = 10;
 
   String _text = 'Click op de Send button om Excel file te selecteren';
   String _summary = '';

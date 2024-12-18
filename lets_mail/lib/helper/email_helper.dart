@@ -20,8 +20,8 @@ class EmailHelper {
       required String signature,
       required String subject,
       required String html}) async {
-    String username = gmailUsername;
-    String password = gmailPassword;
+    String username = Credentials().values[fromUser]![0];
+    String password = Credentials().values[fromUser]![1];
 
     final smtpServer = gmail(username, password);
 

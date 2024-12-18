@@ -32,7 +32,8 @@ class ExcelHelper {
             values[0].isNotEmpty &&
             values[0].contains("@") &&
             !skip) {
-          result.add(EmailModel(emailAdress: values[0], signature: values[1]));
+          String naam = values.length > 1 ? values[1] : "";
+          result.add(EmailModel(emailAdress: values[0], signature: naam));
         }
       }
     }

@@ -42,7 +42,7 @@ class MyHomePage extends StatefulWidget {
 //------------------------------------------------------------
 
 class _MyHomePageState extends State<MyHomePage> {
-  final int waitNseconds = 10;
+  final int waitNseconds = 3;
 
   String _text = '';
   String _summary = '';
@@ -87,6 +87,7 @@ class _MyHomePageState extends State<MyHomePage> {
               _executeButton(),
               const Spacer(),
               Text(_summary),
+              _testWebButton(),
             ],
           ),
         ),
@@ -113,7 +114,7 @@ class _MyHomePageState extends State<MyHomePage> {
       children: [
         SizedBox(width: 150, child: Text(label)),
         SizedBox(
-          width: 1000,
+          width: 600,
           height: 150,
           child: TextField(
             controller: _textCtlrs[index],
@@ -289,8 +290,8 @@ class _MyHomePageState extends State<MyHomePage> {
     for (EmailModel emailModel in emailList) {
       String address = _parseEmailAdress(emailModel.emailAdress);
       if (address.isEmpty) {
-        _buildTexts('Fout tijdens check van emailadres', 'Invalid mail address',
-            emailModel);
+        _buildTexts(
+            'Omgeldig emailadres : ', 'Invalid mail address', emailModel);
         setState(() {});
       }
     }
@@ -348,5 +349,21 @@ class _MyHomePageState extends State<MyHomePage> {
       log('$emailAddress is not valid');
       return '';
     }
+  }
+
+  //----------------------------------------------------------
+  Widget _testWebButton() {
+    return ElevatedButton(
+        onPressed: _onTestWebClicked, child: const Text('Test web'));
+  }
+
+  void _onTestWebClicked() {
+    EmailHelper().sendEmail(
+      fromUser: 'robin',
+      subject: 'Test mail',
+      toEmail: 'robin.bakkerus@gmail.com',
+      signature: 'robin',
+      html: '<h1>Test mail</h1><p>Test mail</p>',
+    );
   }
 }

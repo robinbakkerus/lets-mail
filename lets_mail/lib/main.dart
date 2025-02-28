@@ -43,15 +43,13 @@ class MyHomePage extends StatefulWidget {
 //------------------------------------------------------------
 
 class _MyHomePageState extends State<MyHomePage> {
-  final int waitNseconds = 3;
-
   String _text = '';
   String _summary = '';
   int _total = 0;
   int _success = 0;
   int _failed = 0;
 
-  final _textCtlrs = List<TextEditingController>.generate(5, (index) {
+  final _textCtlrs = List<TextEditingController>.generate(6, (index) {
     return TextEditingController();
   });
 
@@ -60,6 +58,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final _mailingListIndex = 2;
   final _htmlIndex = 3;
   final _bccCountIndex = 4;
+  final _waitNSecondsCountIndex = 5;
 
   bool _dryRun = true;
   bool _execEnabled = false;
@@ -69,6 +68,7 @@ class _MyHomePageState extends State<MyHomePage> {
   void initState() {
     super.initState();
     _textCtlrs[_bccCountIndex].text = '0';
+    _textCtlrs[_waitNSecondsCountIndex].text = '3';
   }
 
   //----------------------------------------------------------
@@ -90,7 +90,7 @@ class _MyHomePageState extends State<MyHomePage> {
               _htmlInput('Body html', _htmlIndex),
               _fromUserInput('From user', _fromUserIndex),
               _emailListInput("Mailing list", _mailingListIndex),
-              _runOptions("Bcc count", _bccCountIndex),
+              _runOptions(),
               SizedBox(height: 20),
               _executeButton(),
               Text(_summary),
@@ -178,14 +178,28 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
 //----------------------------------------------------------
-  Widget _runOptions(String label, int index) {
+  Widget _runOptions() {
     return Row(
       children: [
-        SizedBox(width: 150, child: Text(label)),
+        SizedBox(width: 150, child: Text('Bcc count')),
         SizedBox(
           width: 40,
           child: TextField(
-              controller: _textCtlrs[index],
+              controller: _textCtlrs[_bccCountIndex],
+              keyboardType: TextInputType.number,
+              inputFormatters: <TextInputFormatter>[
+                FilteringTextInputFormatter.digitsOnly
+              ]),
+        ),
+        SizedBox(
+          width: 100,
+          child: Container(),
+        ),
+        SizedBox(width: 150, child: Text('Wait n seconds')),
+        SizedBox(
+          width: 40,
+          child: TextField(
+              controller: _textCtlrs[_waitNSecondsCountIndex],
               keyboardType: TextInputType.number,
               inputFormatters: <TextInputFormatter>[
                 FilteringTextInputFormatter.digitsOnly
@@ -228,6 +242,7 @@ class _MyHomePageState extends State<MyHomePage> {
           onChanged: (value) {
             if (value != null) {
               setState(() {
+                _text = 'Aantal = $_total';
                 _dryRun = value;
               });
             }
@@ -395,7 +410,7 @@ class _MyHomePageState extends State<MyHomePage> {
   //---------------------------
   void _buildTextsBcc(String prefix, String result) {
     if (result.isEmpty) {
-      _success++;
+      _success = _success + int.parse(_textCtlrs[_bccCountIndex].text);
       _text = 'Met succes naar meerdere adressen verstuurd verstuurd';
     } else {
       _failed++;
@@ -435,6 +450,11 @@ class _MyHomePageState extends State<MyHomePage> {
   bool _mailWithBcc() {
     int bccCount = int.parse(_textCtlrs[_bccCountIndex].text);
     return bccCount > 0;
+  }
+
+  //--------------------------------------------------------------
+  int get waitNseconds {
+    return int.parse(_textCtlrs[_waitNSecondsCountIndex].text);
   }
 
   //----------------------------------------------------------

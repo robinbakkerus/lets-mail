@@ -54,16 +54,12 @@ class EmailHelper {
 
     final smtpServer = gmail(username, password);
 
-    List<Address> bccRecipients = toEmails
-        .map(
-          (e) => Address(e),
-        )
-        .toList();
-
     final message = Message()
           ..from = Address(username, fromUser)
           // ..ccRecipients.addAll(['abc@gmail.com', 'xyz@gmail.com']) // For Adding Multiple Recipients
-          ..bccRecipients.add(bccRecipients)
+          ..bccRecipients.addAll(toEmails)
+          // .addAll(['robin.bakkerus@gmail.com', 'bakjrb@gmail.com'])
+          // ..bccRecipients.add(toEmails) // For Adding Bcc Recipients
           ..subject = subject
           ..html = html // For Adding Html in email
         // ..attachments = [
@@ -78,6 +74,7 @@ class EmailHelper {
       await send(message, smtpServer);
       return "";
     } on MailerException catch (e) {
+      log(e.message);
       return e.message;
     }
   }

@@ -3,6 +3,7 @@ import 'dart:developer';
 import 'dart:io';
 
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lets_mail/helper/content_helper.dart';
 import 'package:lets_mail/helper/excel_helper.dart';
 import 'package:lets_mail/helper/file_helper.dart';
@@ -50,17 +51,25 @@ class _MyHomePageState extends State<MyHomePage> {
   int _success = 0;
   int _failed = 0;
 
-  final _textCtlrs = List<TextEditingController>.generate(4, (index) {
+  final _textCtlrs = List<TextEditingController>.generate(5, (index) {
     return TextEditingController();
   });
-  final subjectIndex = 0;
-  final fromUserIndex = 1;
-  final mailingListIndex = 2;
-  final htmlIndex = 3;
+
+  final _subjectIndex = 0;
+  final _fromUserIndex = 1;
+  final _mailingListIndex = 2;
+  final _htmlIndex = 3;
+  final _bccCountIndex = 4;
 
   bool _dryRun = true;
   bool _execEnabled = false;
   File? _excelFile;
+
+  @override
+  void initState() {
+    super.initState();
+    _textCtlrs[_bccCountIndex].text = '0';
+  }
 
   //----------------------------------------------------------
   @override
@@ -74,20 +83,18 @@ class _MyHomePageState extends State<MyHomePage> {
         child: Padding(
           padding: const EdgeInsets.all(8.0),
           child: Column(
+            spacing: 10,
             mainAxisAlignment: MainAxisAlignment.center,
             children: <Widget>[
-              _subjectInput('Subject', subjectIndex),
-              const Spacer(),
-              _htmlInput('Body html', htmlIndex),
-              const Spacer(),
-              _fromUserInput('From user', fromUserIndex),
-              const Spacer(),
-              _emailListInput("Mailing list", mailingListIndex),
-              const Spacer(),
+              _subjectInput('Subject', _subjectIndex),
+              _htmlInput('Body html', _htmlIndex),
+              _fromUserInput('From user', _fromUserIndex),
+              _emailListInput("Mailing list", _mailingListIndex),
+              _runOptions("Bcc count", _bccCountIndex),
+              SizedBox(height: 20),
               _executeButton(),
-              const Spacer(),
               Text(_summary),
-              _testWebButton(),
+              // _testWebButton(),
             ],
           ),
         ),
@@ -166,6 +173,28 @@ class _MyHomePageState extends State<MyHomePage> {
         Container(
           width: 20,
         ),
+      ],
+    );
+  }
+
+//----------------------------------------------------------
+  Widget _runOptions(String label, int index) {
+    return Row(
+      children: [
+        SizedBox(width: 150, child: Text(label)),
+        SizedBox(
+          width: 40,
+          child: TextField(
+              controller: _textCtlrs[index],
+              keyboardType: TextInputType.number,
+              inputFormatters: <TextInputFormatter>[
+                FilteringTextInputFormatter.digitsOnly
+              ]),
+        ),
+        SizedBox(
+          width: 150,
+          child: Container(),
+        ),
         _dryRunCheckbox(),
       ],
     );
@@ -177,7 +206,7 @@ class _MyHomePageState extends State<MyHomePage> {
 
     if (_excelFile != null) {
       List<EmailModel> emailList = ExcelHelper().parseFile(_excelFile!);
-      _textCtlrs[mailingListIndex].text = _excelFile!.path;
+      _textCtlrs[_mailingListIndex].text = _excelFile!.path;
       _total = emailList.length;
       setState(() {
         _checkExecEnabled();
@@ -223,6 +252,7 @@ class _MyHomePageState extends State<MyHomePage> {
   Widget _executeButton() {
     String label = _dryRun ? 'Send only first mail' : 'Send all $_total mails';
     return Row(
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         ElevatedButton(
             onPressed: _execEnabled ? _onExecuteClicked : null,
@@ -271,6 +301,29 @@ class _MyHomePageState extends State<MyHomePage> {
 
   //---------------------------
   Future<void> _sendAllMails(List<EmailModel> emailList) async {
+    if (_mailWithBcc()) {
+      List<String> allToEmails = emailList
+          .map((e) => _parseEmailAdress(e.emailAdress))
+          .where((element) => element.isNotEmpty)
+          .toList();
+
+      int bccCount = int.parse(_textCtlrs[_bccCountIndex].text);
+
+      var list = allToEmails.take(bccCount).toList();
+      var rest = allToEmails.skip(bccCount).toList();
+      while (list.isNotEmpty) {
+        _sendMailsWithBcc(list);
+        await Future.delayed(Duration(seconds: waitNseconds));
+        list = rest.take(bccCount).toList();
+        rest = rest.skip(bccCount).toList();
+      }
+    } else {
+      await _sendAllMailsIndividually(emailList);
+    }
+  }
+
+//--------------------------------
+  Future<void> _sendAllMailsIndividually(List<EmailModel> emailList) async {
     for (EmailModel emailModel in emailList) {
       String address = _parseEmailAdress(emailModel.emailAdress);
       if (address.isNotEmpty) {
@@ -278,9 +331,6 @@ class _MyHomePageState extends State<MyHomePage> {
             EmailModel(emailAdress: address, signature: emailModel.signature);
         _sendMail(useModel);
         await Future.delayed(Duration(seconds: waitNseconds));
-      } else {
-        _buildTexts(
-            'Fout tijdensversturen naar', 'Invalid mail address', emailModel);
       }
     }
   }
@@ -300,18 +350,19 @@ class _MyHomePageState extends State<MyHomePage> {
   //---------------------------
   void _sendMail(EmailModel emailModel) async {
     String result = await EmailHelper().sendEmail(
-        fromUser: _textCtlrs[fromUserIndex].text,
-        subject: _textCtlrs[subjectIndex].text,
+        fromUser: _textCtlrs[_fromUserIndex].text,
+        subject: _textCtlrs[_subjectIndex].text,
         toEmail: emailModel.emailAdress,
         signature: emailModel.signature,
         html: ContentHelper()
-            .buildContent(emailModel, _textCtlrs[htmlIndex].text));
+            .buildContent(emailModel, _textCtlrs[_htmlIndex].text));
 
     setState(() {
       _buildTexts('Fout tijdens versturen naar', result, emailModel);
     });
   }
 
+  //---------------------------
   void _buildTexts(String prefix, String result, EmailModel emailModel) {
     if (result.isEmpty) {
       _success++;
@@ -328,6 +379,35 @@ class _MyHomePageState extends State<MyHomePage> {
     _text = '$_success van $_total verstuurd, failed: $_failed';
   }
 
+  //---------------------------
+  void _sendMailsWithBcc(List<String> toEmails) async {
+    String result = await EmailHelper().sendEmailsWithBcc(
+        toEmails: toEmails,
+        fromUser: _textCtlrs[_fromUserIndex].text,
+        subject: _textCtlrs[_subjectIndex].text,
+        html: _textCtlrs[_htmlIndex].text);
+
+    setState(() {
+      _buildTextsBcc('Fout tijdens versturen naar', result);
+    });
+  }
+
+  //---------------------------
+  void _buildTextsBcc(String prefix, String result) {
+    if (result.isEmpty) {
+      _success++;
+      _text = 'Met succes naar meerdere adressen verstuurd verstuurd';
+    } else {
+      _failed++;
+      _text = result;
+      _summary += '\n$_text';
+    }
+
+    // _summary = '$_success van $_total verstuurd, failed: $_failed';
+    _text = '$_success van $_total verstuurd, failed: $_failed';
+  }
+
+  //---------------------------
   String _parseEmailAdress(String value) {
     String emailAddress = value;
     if (value.contains('<')) {
@@ -352,18 +432,24 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   //----------------------------------------------------------
-  Widget _testWebButton() {
-    return ElevatedButton(
-        onPressed: _onTestWebClicked, child: const Text('Test web'));
+  bool _mailWithBcc() {
+    int bccCount = int.parse(_textCtlrs[_bccCountIndex].text);
+    return bccCount > 0;
   }
 
-  void _onTestWebClicked() {
-    EmailHelper().sendEmail(
-      fromUser: 'robin',
-      subject: 'Test mail',
-      toEmail: 'robin.bakkerus@gmail.com',
-      signature: 'robin',
-      html: '<h1>Test mail</h1><p>Test mail</p>',
-    );
-  }
+  //----------------------------------------------------------
+  // Widget _testWebButton() {
+  //   return ElevatedButton(
+  //       onPressed: _onTestWebClicked, child: const Text('Test web'));
+  // }
+
+  // void _onTestWebClicked() {
+  //   EmailHelper().sendEmail(
+  //     fromUser: 'robin',
+  //     subject: 'Test mail',
+  //     toEmail: 'robin.bakkerus@gmail.com',
+  //     signature: 'robin',
+  //     html: '<h1>Test mail</h1><p>Test mail</p>',
+  //   );
+  // }
 }

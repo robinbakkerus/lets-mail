@@ -69,6 +69,14 @@ class _MyHomePageState extends State<MyHomePage> {
     super.initState();
     _textCtlrs[_bccCountIndex].text = '0';
     _textCtlrs[_waitNSecondsCountIndex].text = '3';
+
+    for (TextEditingController ctrl in _textCtlrs) {
+      ctrl.addListener(() {
+        setState(() {
+          _checkExecEnabled();
+        });
+      });
+    }
   }
 
   //----------------------------------------------------------
@@ -185,6 +193,7 @@ class _MyHomePageState extends State<MyHomePage> {
         SizedBox(
           width: 40,
           child: TextField(
+              enabled: !_hasSignature,
               controller: _textCtlrs[_bccCountIndex],
               keyboardType: TextInputType.number,
               inputFormatters: <TextInputFormatter>[
@@ -328,7 +337,7 @@ class _MyHomePageState extends State<MyHomePage> {
       var rest = allToEmails.skip(bccCount).toList();
       while (list.isNotEmpty) {
         _sendMailsWithBcc(list);
-        await Future.delayed(Duration(seconds: waitNseconds));
+        await Future.delayed(Duration(seconds: _waitNseconds));
         list = rest.take(bccCount).toList();
         rest = rest.skip(bccCount).toList();
       }
@@ -345,7 +354,7 @@ class _MyHomePageState extends State<MyHomePage> {
         EmailModel useModel =
             EmailModel(emailAdress: address, signature: emailModel.signature);
         _sendMail(useModel);
-        await Future.delayed(Duration(seconds: waitNseconds));
+        await Future.delayed(Duration(seconds: _waitNseconds));
       }
     }
   }
@@ -453,8 +462,13 @@ class _MyHomePageState extends State<MyHomePage> {
   }
 
   //--------------------------------------------------------------
-  int get waitNseconds {
+  int get _waitNseconds {
     return int.parse(_textCtlrs[_waitNSecondsCountIndex].text);
+  }
+
+  //--------------------------------------------------------------
+  bool get _hasSignature {
+    return _textCtlrs[_htmlIndex].text.contains("%naam%");
   }
 
   //----------------------------------------------------------
